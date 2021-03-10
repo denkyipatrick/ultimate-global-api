@@ -1,0 +1,41 @@
+'use strict';
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.createTable('DownLineBinaryPositions', {
+      id: {
+        primaryKey: true,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
+      },
+      distributorUsername: {
+        type: Sequelize.STRING,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        reference: {
+          key: 'username',
+          model: 'Distributors'
+        }
+      },
+      position: {
+        type: Sequelize.ENUM,
+        values: ['left', 'right']
+      },
+      positionNumber: {
+        type: Sequelize.INTEGER
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.BIGINT,
+        defaultValue: new Date().getTime()
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.BIGINT,
+        defaultValue: new Date().getTime()
+      }
+    });
+  },
+  down: (queryInterface, Sequelize) => {
+    return queryInterface.dropTable('DownLineBinaryPositions');
+  }
+};

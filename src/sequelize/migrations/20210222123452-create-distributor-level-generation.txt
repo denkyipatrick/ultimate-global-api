@@ -1,0 +1,56 @@
+'use strict';
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.createTable('DistributorLevelGenerations', {
+      id: {
+        primaryKey: true,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDv4
+      },
+      distributorUsername: {
+        type: Sequelize.STRING,
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
+        references: {
+          key: 'username',
+          model: 'Distributors'
+        }
+      },
+      distributorLevel: {
+        type: Sequelize.UUID,
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
+        references: {
+          key: 'id',
+          model: 'DistributorLevels'
+        }
+      },
+      downLineUsername: {
+        type: Sequelize.STRING,
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
+        references: {
+          key: 'username',
+          model: 'Distributors'
+        }
+      },
+      downLinePosition: {
+        type: Sequelize.ENUM,
+        values: ['left', 'right']
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.BIGINT,
+        defaultValue: new Date().getTime()
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.BIGINT,
+        defaultValue: new Date().getTime()
+      }
+    });
+  },
+  down: (queryInterface, Sequelize) => {
+    return queryInterface.dropTable('DistributorLevelGenerations');
+  }
+};
