@@ -33,9 +33,60 @@ module.exports = class DistributorActions {
         });
     }
 
+    /**
+     * 
+     * @param {String} username the username of the target distributor
+     * @param {String} firstName the new first name to store
+     * @param {String} lastName the new last name to store
+     * @param {SequelizeTransaction} sequelizeTransaction a transaction object for ACID
+     * @returns a new distributor model instance.
+     */
+    static changeName(username, firstName, lastName, sequelizeTransaction = null) {
+        return Distributor.update({
+            firstName: firstName,
+            lastName: lastName
+        }, {
+            transaction: sequelizeTransaction,
+            where: { username: username }
+        }).then(() => Distributor.findByPk(username, { transaction: sequelizeTransaction }));
+    }
+
+    
+    /**
+     * 
+     * @param {String} username the username of the target distributor
+     * @param {String} password an encrypted password to store
+     * @param {SequelizeTransaction} sequelizeTransaction a transaction object for ACID
+     * @returns a new distributor model instance.
+     */
+     static changePassword(username, password, sequelizeTransaction = null) {
+        return Distributor.update({
+            password: password
+        }, {
+            transaction: sequelizeTransaction,
+            where: { username: username }
+        }).then(() => Distributor.findByPk(username, { transaction: sequelizeTransaction }));
+    }
+
     static findDistributor(username, transaction = null) {
         return Distributor.findByPk(username, {
             transaction: transaction
+        });
+    }
+
+    static findDistributorWallet(username, transaction = null) {
+        return DistributorWallet.findOne({
+            transaction: transaction,
+            where: {
+                distributorUsername: username
+            }
+        });
+    }
+
+    static findDistributorWithWallet(username, transaction = null) {
+        return Distributor.findByPk(username, {
+            transaction: transaction,
+            include: ['wallet', 'stage', 'sponsor']
         });
     }
 
@@ -157,6 +208,24 @@ module.exports = class DistributorActions {
         });
     }
 
+    
+    static async doesDistributorQualifyForNextLevel(distributorLevelGeneration) {
+        let result = true;
+
+        if (distributorLevelGeneration.levelId === 'starter_stage_1') {
+            for (const downLine of distributorLevelGeneration.downLines) {
+                if (downLine.downLines.length != 2) {
+                    result = false;
+                    break;
+                }
+            }
+        } else {
+            result = false;
+        }
+
+        return result;
+    }
+
     /**
      * Upgrades a distributor to his next level.
      * @param {DistributorData} distributor the distributor to upgrade level
@@ -189,6 +258,58 @@ module.exports = class DistributorActions {
 
         return DistributorLevelActions.
             findNextLevel(distributor.distributorLevelId, transaction);
+    }
+
+    static findDistributorLevelGeneration(username, levelId, transaction = null) {
+        if (levelId === 'starter_level_1') {
+            return DistributorLevelGeneration.findOne({
+                where: {
+                    [Sequelize.Op.and]: [
+                        { levelId: levelId },
+                        { username: username }
+                    ]
+                },
+                include: [
+                    { model: Distributor, as: 'distributor', include: ['stage'] },
+                    { 
+                        model: DistributorLevelGeneration, 
+                        as: 'downLines',
+                        order: [['position', 'ASC']],
+                        include: [
+                            { model: Distributor, as: 'distributor', include: ['stage'] },
+                            { 
+                                model: DistributorLevelGeneration, 
+                                as: 'downLines', 
+                                order: [['position', 'ASC']], 
+                                include: [{ model: Distributor, as: 'distributor', include: ['stage'] },]
+                            }
+                        ]
+                    }
+                ]
+            });
+        }
+
+        return DistributorLevelGeneration.findOne({
+            transaction: transaction,
+            where: {
+                [Sequelize.Op.and]: [
+                    { levelId: levelId },
+                    { username: username }
+                ]
+            },
+            include: [
+                { model: Distributor, as: 'distributor', include: ['stage'] },
+                { model: DistributorLevelGeneration, as: 'downLines', include: [
+                    { model: Distributor, as: 'distributor', include: ['stage'] },
+                    { model: DistributorLevelGeneration, as: 'downLines', include: [
+                        { model: Distributor, as: 'distributor', include: ['stage'] },
+                        { model: DistributorLevelGeneration, as: 'downLines', include: [
+                            { model: Distributor, as: 'distributor', include: ['stage'] },
+                        ] }
+                    ] }
+                ]}
+            ]
+        });
     }
 
     static async getDistributorLevelUpLine(username, levelId, transaction = null) {

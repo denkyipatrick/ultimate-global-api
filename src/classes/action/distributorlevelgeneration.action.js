@@ -1,8 +1,94 @@
 
-const { DistributorLevelGeneration, Sequelize, sequelize } = require("../../sequelize/models/index");
+const { 
+    DistributorLevelGeneration, 
+    Distributor, 
+    Sequelize
+} = require("../../sequelize/models/index");
 const DistributorLevelGenerationData = require("../data/distributorlevelgeneration.data");
+const DistributorActions = require("./distributor.action");
 
 module.exports = class DistributorLevelGenerationActions {
+
+    static async createLevelDownLine(upLineUsername, downLineUsername, levelId, sequelizeTransaction = null) {
+        let downLinePosition = "";
+
+        if (!(await this.hasLeftChild(upLineUsername, levelId, sequelizeTransaction))) {
+            downLinePosition = 'left';
+        } else if (!(await this.hasRightChild(upLineUsername, levelId, sequelizeTransaction))) {
+            downLinePosition = 'right';
+        } else {
+            return Promise.reject('left_and_right_occupied');
+        }
+
+        const distributorUpLineStarterStageRecord = await DistributorLevelGeneration.findOne({
+            transaction: sequelizeTransaction,
+            where: { 
+                [Sequelize.Op.and]: [
+                    { levelId: levelId },
+                    { username: upLineUsername }
+                ]
+             }
+        });
+
+        return DistributorLevelGeneration.create({
+            parentId: distributorUpLineStarterStageRecord.id, 
+            levelId: levelId,
+            position: downLinePosition,
+            username: downLineUsername,
+            upLineUsername: upLineUsername
+        }, { transaction: sequelizeTransaction });
+    }
+
+    static async findDistributorLevelUpLine(distributorUsername, levelId, sequelizeTransaction = null) {
+        const distributorLevel = await DistributorLevelGeneration.findOne({
+            transaction: sequelizeTransaction,
+            where: {
+                levelId: levelId,
+                username: distributorUsername
+            },
+            include: [
+                { model: DistributorLevelGeneration, as: 'parent', include: [
+                    { model: Distributor, as: 'distributor', include: ['stage'] }
+                ]}
+            ]
+        });
+
+        return distributorLevel ? distributorLevel.parent : null;
+    }
+
+    static async findDistributorUpLineLevelGeneration(distributorUsername, levelId, sequelizeTransaction = null) {
+        
+    }
+
+    /*
+        Checks if the upLine of distributorUsername in stage 1 
+        is available in the next stage
+    */
+    static async findDistributorNextLevelUpLine(
+        distributorUsername, nextLevelId, sequelizeTransaction = null
+    ) {
+        let newLevelUpLine = null;
+        
+        while(true) {
+            const level1UpLine = await this.findDistributorLevelUpLine(
+                distributorUsername, 'starter_stage_1', sequelizeTransaction
+            );
+
+            newLevelUpLine = await DistributorLevelGeneration.findOne({
+                transaction: sequelizeTransaction,
+                where: {
+                    levelId: nextLevelId,
+                    username: level1UpLine.username
+                }
+            });
+
+            if (newLevelUpLine) { break; }
+            
+            distributorUsername = level1UpLine.username;
+        }
+
+        return newLevelUpLine;
+    }
 
     static async doesDistributorHaveLevelDirectChild(
         distributorUsername, 

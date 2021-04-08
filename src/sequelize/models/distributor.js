@@ -37,37 +37,22 @@ module.exports = (sequelize, DataTypes) => {
     Distributor.hasMany(models.UpLineLevel, {
       as: 'levels',
       foreignKey: 'distributorUsername'
-    })
-    
-    // Distributor.hasMany(models.Distributor, {
-    //   as: 'downLines',
-    //   foreignKey: 'upLineUsername'
-    // });
+    });
 
-    // Distributor.belongsTo(models.Distributor, {
-    //   as: 'upLine',
-    //   foreignKey: 'upLineUsername'
-    // });
+    Distributor.belongsTo(models.Distributor, {
+      as: 'sponsor',
+      foreignKey: 'sponsorUsername'
+    });
 
-    // Distributor.hasMany(models.Distributor, {
-    //   as: 'sponsored',
-    //   foreignKey: 'sponsorUsername'
-    // });
-
-    // Distributor.belongsTo(models.Distributor, {
-    //   as: 'sponsor',
-    //   foreignKey: 'sponsorUsername'
-    // });
+    Distributor.hasOne(models.DistributorWallet, {
+      as: 'wallet',
+      foreignKey: 'distributorUsername'
+    });
 
     Distributor.belongsTo(models.DistributorLevel, {
       as: 'stage',
       foreignKey: 'distributorLevelId'
     });
-
-    // Distributor.hasOne(models.DownLineBinaryPosition, {
-    //   as: 'binaryPosition',
-    //   foreignKey: 'distributorUsername'
-    // })
   };
   return Distributor;
 };

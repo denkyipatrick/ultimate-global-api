@@ -5,13 +5,36 @@ const DistributorWalletActions = require("../classes/action/distributorwallet.ac
 const DistributorData = require("../classes/data/distributor.data");
 const DistributorLevelGenerationData = require("../classes/data/distributorlevelgeneration.data");
 const DistributorWalletData = require("../classes/data/distributorwallet.dataclass");
-const { sequelize, Sequelize, Distributor, DistributorLevelGeneration,
-    UpLineLevel, UpLineLevelDownLine } = require("../sequelize/models");
+const { 
+    sequelize, 
+    Sequelize, 
+    Notification, 
+    Distributor, 
+    DistributorLevelGeneration 
+} = require("../sequelize/models");
+
+const bcryptjs = require('bcryptjs');
 
 module.exports = app => {
     const BASE_URL = process.env.BASE_URL;
 
     app.get(`${BASE_URL}/distributors`, async (req, res) => {        
+    });
+    
+    app.get(`${BASE_URL}/distributors/:username/notifications`, async (req, res) => {
+        try {
+            const notifications = await Notification.findAll({
+                where: {
+                    distributorUsername: req.params.username
+                },
+                order: [['createdAt', 'DESC']]
+            });
+
+            res.send(notifications);
+        } catch(error) {
+            res.sendStatus(500);
+            console.error(error);
+        }
     });
 
     app.get(`${BASE_URL}/distributors/:username/generations/:stage`, async (req, res) => {
@@ -21,82 +44,53 @@ module.exports = app => {
 
             switch(req.params.stage) {
                 case 'starter': {
-                    generation = await DistributorLevelGeneration.findOne({
-                        where: {
-                            [Sequelize.Op.and]: [
-                                { levelId: 'starter_stage_1' },
-                                { username: req.params.username }
-                            ]
-                        },
-                        order: [['createdAt', 'ASC']],
-                        include: [
-                            { model: Distributor, as: 'distributor', include: ['stage'] },
-                            { 
-                                model: DistributorLevelGeneration, 
-                                as: 'downLines', 
-                                order: [['createdAt', 'ASC']], 
-                                include: [
-                                    { model: Distributor, as: 'distributor', include: ['stage'] },
-                                    { 
-                                        model: DistributorLevelGeneration, 
-                                        as: 'downLines', 
-                                        order: [['createdAt', 'ASC']], 
-                                        include: [{ model: Distributor, as: 'distributor', include: ['stage'] },]
-                                    }
-                                ]
-                            }
-                        ]
-                    });
+                    generation = await DistributorActions.findDistributorLevelGeneration(
+                        req.params.username, 'starter_stage_1'
+                    );
                     break;
                 }
                 case 'leader': {
-                    // generation = await DistributorActions.
-                    //     findDistributorLeaderGeneration(req.params.username)
-
-                    generation = await DistributorLevelGeneration.findOne({
-                        where: {
-                            [Sequelize.Op.and]: [
-                                { levelId: 'leader_stage_2' },
-                                { username: req.params.username }
-                            ]
-                        },
-                        include: [
-                            { model: Distributor, as: 'distributor', include: ['stage'] },
-                            { model: DistributorLevelGeneration, as: 'downLines', include: [
-                                { model: Distributor, as: 'distributor', include: ['stage'] },
-                                { model: DistributorLevelGeneration, as: 'downLines', include: [
-                                    { model: Distributor, as: 'distributor', include: ['stage'] },
-                                    { model: DistributorLevelGeneration, as: 'downLines', include: [
-                                        { model: Distributor, as: 'distributor', include: ['stage'] },
-                                    ] }
-                                ] }
-                            ]}
-                        ]
-                    })
+                    generation = await DistributorActions.findDistributorLevelGeneration(
+                        req.params.username, 'leader_stage_2'
+                    );
                     break;
                 }
                 case 'ruby': {
+                    generation = await DistributorActions.findDistributorLevelGeneration(
+                        req.params.username, 'ruby_stage_3'
+                    );
+                    break;
+                }
+                case 'emerald': {
+                    generation = await DistributorActions.findDistributorLevelGeneration(
+                        req.params.username, 'emerald_stage_4'
+                    );
+                    break;
+                }
+                case 'diamond': {
+                    generation = await DistributorActions.findDistributorLevelGeneration(
+                        req.params.username, 'diamond_stage_5'
+                    );
                     break;
                 }
                 default: {
                 }
             }
-
-            // console.log(generation);
+            
             res.send(generation);
         } catch(error) {
             res.sendStatus(500);
             console.error(error);
         }
-    })
+    });
 
     app.post(`${BASE_URL}/distributors`, async (req, res) => {
-        console.log(req.body);
         let transaction = null;
-        // return res.send();
+        console.log(req.body);
 
         try {
             const STARTER_STAGE_ID = "starter_stage_1";
+            let CURRENT_LEVEL_ID = STARTER_STAGE_ID;
             transaction = await sequelize.transaction();
             
             const createdDistributor = await DistributorActions.createDistributor(
@@ -110,66 +104,212 @@ module.exports = app => {
                     req.body.upLineUsername),
                 transaction
             );
+            
+            const TEN_DOLLARS = 10;
 
-            let downLinePosition = null;
+            const distributorWallet = await DistributorWalletActions.create(
+                new DistributorWalletData(createdDistributor.username, TEN_DOLLARS), transaction);
 
-            if (!await DistributorLevelGeneration.findOne({
-                transaction: transaction,
-                where: {
-                    [Sequelize.Op.and]: [
-                        { upLineUsername: req.body.upLineUsername },
-                        { position: 'left' },
-                        { levelId: STARTER_STAGE_ID  }
-                    ]
-                }
-            })) {
-                downLinePosition = 'left';
-            } else if (!await DistributorLevelGeneration.findOne({
-                transaction: transaction,
-                where: {
-                    [Sequelize.Op.and]: [
-                        { upLineUsername: req.body.upLineUsername },
-                        { position: 'right' },
-                        { levelId: STARTER_STAGE_ID  }
-                    ]
-                }
-            })) {
-                downLinePosition = 'right';
-            } else {
-                res.status(500).send('left_right_occupied');
-                throw "lef_right_occupied";
-            }
-
-            const distributorUpLineStarterStageRecord = await DistributorLevelGeneration.findOne({
-                transaction: transaction,
-                where: { 
-                    [Sequelize.Op.and]: [
-                        { levelId: STARTER_STAGE_ID },
-                        { username: req.body.upLineUsername }
-                    ]
-                 }
-            });
-
-            // const distributorStarterGeneration = 
-            await DistributorLevelGeneration.create({
-                parentId: distributorUpLineStarterStageRecord.id, 
-                levelId: STARTER_STAGE_ID,
-                position: downLinePosition,
-                username: createdDistributor.username,
-                upLineUsername: req.body.upLineUsername
-            }, { transaction: transaction });
-
-            const FIVE_DOLLARS = 5;
-
-            createdDistributor.setDataValue('wallet', await DistributorWalletActions.create(
-                new DistributorWalletData(createdDistributor.username, FIVE_DOLLARS), transaction));
+            createdDistributor.setDataValue('wallet', distributorWallet);
 
             await DistributorActions.deductDistributorWallet(
-                createdDistributor.sponsorUsername, FIVE_DOLLARS, transaction);
-                
+                createdDistributor.sponsorUsername, TEN_DOLLARS, transaction);
+
+            // const createdDistributorStarterGenerationRoot = await DistributorLevelGenerationActions
+            //         .createLevelDownLine(req.body.upLineUsername, 
+            //             createdDistributor.username, STARTER_STAGE_ID, transaction);
+
+            let newDownLine = await DistributorLevelGenerationActions
+                .createLevelDownLine(req.body.upLineUsername, 
+                    createdDistributor.username, STARTER_STAGE_ID, transaction);
+
+            console.log('has passed beginning');
+
+            while(true) {
+                if (newDownLine.position === 'right') {
+                    const upLineToUpgrade = await DistributorLevelGenerationActions
+                        .findDistributorLevelUpLine(
+                            newDownLine.upLineUsername,
+                            CURRENT_LEVEL_ID,
+                            transaction);
+
+                    console.log('upLineToUpgrade', upLineToUpgrade);
+
+                    if(!upLineToUpgrade) {
+                        break;
+                    }
+    
+                    const upLineToUpgradeLevelGeneration = await DistributorActions
+                        .findDistributorLevelGeneration(
+                            upLineToUpgrade.username, 
+                            CURRENT_LEVEL_ID, 
+                            transaction);
+
+                    console.log('upLineToUpgradeLevelGeneration', 
+                        upLineToUpgradeLevelGeneration)
+    
+                    const hasQualified = await DistributorActions.doesDistributorQualifyForNextLevel(
+                        upLineToUpgradeLevelGeneration
+                    ); // write the code to determine the qualification.
+
+                    console.log('hasQualified', hasQualified);
+    
+                    if (hasQualified) {
+                        let nextLevel = await DistributorLevelActions
+                            .findNextLevel(STARTER_STAGE_ID, transaction);
+    
+                        const nextStageUpLine = await DistributorLevelGenerationActions.
+                            findDistributorNextLevelUpLine(
+                                upLineToUpgrade.username,
+                                nextLevel.id,
+                                transaction
+                            );
+
+                        console.log('nextStageUpLine', nextStageUpLine);
+    
+                        if (!nextStageUpLine) {
+                            console.log('no next stage up line, putting upLineToUpgrade as first')
+                            // save upLineToUpgrade with position none and parentId null
+                            // break the loop
+                            await DistributorLevelGeneration.create({
+                                // parentId: distributorUpLineStarterStageRecord.id, 
+                                levelId: nextLevel.id,
+                                position: 'none',
+                                username: upLineToUpgrade.username
+                                // upLineUsername: req.body.upLineUsername
+                            }, { transaction: transaction });
+                            
+                            // Upgrade upLineToUpgrade's current level
+                            await DistributorActions.upgradeDistributorToNextStage(
+                                upLineToUpgrade.distributor, transaction
+                            );
+                            break; // break the loop
+                        } else {
+                            // find the best position to place upLineToUpgrade
+                            // save upLineToUpgrade under the found upLine into newDownLine
+                            // continue with the loop
+                            const nextStageUpLineLevelGeneration = await 
+                                DistributorActions.findDistributorLevelGeneration(
+                                    nextStageUpLine.username,
+                                    nextLevel.id, transaction);
+                            
+                            let newLevelUpLine = null; // find the upLine for the new level.
+    
+                            if(nextStageUpLineLevelGeneration.downLines.length < 2) {
+                                newLevelUpLine = nextStageUpLine
+                            } else {
+                                console.log(nextStageUpLine.username, ' already has his team.');
+                                for(const downLine of nextStageUpLineLevelGeneration.downLines) {
+                                    if (downLine.downLines.length < 2) {
+                                        newLevelUpLine = downLine;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            console.log('newLevelUpLine', newLevelUpLine);
+    
+                            newDownLine = await DistributorLevelGenerationActions
+                            .createLevelDownLine(
+                                newLevelUpLine.username,
+                                upLineToUpgrade.username, 
+                                nextLevel.id, 
+                                transaction);
+                                
+                            // Upgrade upLineToUpgrade's current level
+                            await DistributorActions.upgradeDistributorToNextStage(
+                                upLineToUpgrade.distributor, transaction
+                            );
+
+                            console.log('newDownLine', newDownLine);
+                        }
+
+                        if(CURRENT_LEVEL_ID === "infinity_stage_9") {
+                            break;
+                        }
+
+                        CURRENT_LEVEL_ID = nextLevel.id;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            res.status(201).send(createdDistributor);
+            transaction.rollback();
+
+            // console.log(createdDistributorStarterGenerationRoot);
+
+            // let downLinePosition = null;
+
+            // if (!await DistributorLevelGeneration.findOne({
+            //     transaction: transaction,
+            //     where: {
+            //         [Sequelize.Op.and]: [
+            //             { upLineUsername: req.body.upLineUsername },
+            //             { position: 'left' },
+            //             { levelId: STARTER_STAGE_ID  }
+            //         ]
+            //     }
+            // })) {
+            //     downLinePosition = 'left';
+            // } else if (!await DistributorLevelGeneration.findOne({
+            //     transaction: transaction,
+            //     where: {
+            //         [Sequelize.Op.and]: [
+            //             { upLineUsername: req.body.upLineUsername },
+            //             { position: 'right' },
+            //             { levelId: STARTER_STAGE_ID  }
+            //         ]
+            //     }
+            // })) {
+            //     downLinePosition = 'right';
+            // } else {
+            //     res.status(500).send('left_right_occupied');
+            //     throw "lef_right_occupied";
+            // }
+
+            // const distributorUpLineStarterStageRecord = await DistributorLevelGeneration.findOne({
+            //     transaction: transaction,
+            //     where: { 
+            //         [Sequelize.Op.and]: [
+            //             { levelId: STARTER_STAGE_ID },
+            //             { username: req.body.upLineUsername }
+            //         ]
+            //      }
+            // });
+
+            // // const distributorStarterGeneration = 
+            // await DistributorLevelGeneration.create({
+            //     parentId: distributorUpLineStarterStageRecord.id, 
+            //     levelId: STARTER_STAGE_ID,
+            //     position: downLinePosition,
+            //     username: createdDistributor.username,
+            //     upLineUsername: req.body.upLineUsername
+            // }, { transaction: transaction });
+
+            return;
+
             let secondUpUpLine = null;
 
-            if (downLinePosition == 'right') {
+            if (createdDistributorStarterGenerationRoot.position == 'right') {
+                const createdDistributorSecondUpUpLine = await DistributorLevelGenerationActions
+                    .findDistributorLevelUpUpLine(
+                        createdDistributorStarterGenerationRoot.upLineUsername,
+                        CURRENT_LEVEL_ID,
+                        transaction
+                    );
+
+                createdDistributorSecondUpUpLine.setDataValue('downLines', await DistributorActions
+                    .findDistributorLevelGeneration(
+                        createdDistributorSecondUpUpLine.username, 
+                        CURRENT_LEVEL_ID, transaction)
+                );
+
+                console.log(createdDistributorSecondUpUpLine);
+
                 const distributorSecondUpUpLineStarterGeneration = 
                     await DistributorLevelGeneration.findOne({
                         transaction: transaction,
@@ -213,9 +353,7 @@ module.exports = app => {
                         // stage.
 
                         let keepLooping = true;
-                        let CURRENT_LEVEL_ID = STARTER_STAGE_ID;
-                        let nextLevel = await DistributorLevelActions
-                            .findNextLevel(STARTER_STAGE_ID, transaction)
+                        // let CURRENT_LEVEL_ID = STARTER_STAGE_ID;
                         
                         // assume it's upgraded distributor's upLine
                         let nextLevelUpLine = upLineToUpgrade.upLine
@@ -334,75 +472,75 @@ module.exports = app => {
 
                                     console.log(levelDownLine);
 
-                                    if (levelDownLine.position == 'right') {
-                                        console.log('this down line is a right child in the next level.');
+                                    // if (levelDownLine.position == 'right') {
+                                    //     console.log('this down line is a right child in the next level.');
 
-                                        const upLineToUpgradesUpLine = await DistributorLevelGeneration.findOne({
-                                            transaction: transaction,
-                                            where: {
-                                                levelId: nextLevel.id,
-                                                username:  currentUpLineNextStageRecord.upLineUsername
-                                            }
-                                        });
+                                    //     const upLineToUpgradesUpLine = await DistributorLevelGeneration.findOne({
+                                    //         transaction: transaction,
+                                    //         where: {
+                                    //             levelId: nextLevel.id,
+                                    //             username:  currentUpLineNextStageRecord.upLineUsername
+                                    //         }
+                                    //     });
 
-                                        console.log(upLineToUpgradesUpLine.upLineUsername);
+                                    //     console.log(upLineToUpgradesUpLine.upLineUsername);
 
-                                        if (upLineToUpgradesUpLine) {
-                                            const downs = await DistributorLevelGeneration.findOne({
-                                                transaction: transaction,
-                                                where: {
-                                                    levelId: nextLevel.id,
-                                                    username: upLineToUpgradesUpLine.upLineUsername
-                                                },
-                                                include: [
-                                                    { 
-                                                        model: DistributorLevelGeneration, 
-                                                        as: 'downLines',
-                                                        include: [
-                                                            {
-                                                                model: DistributorLevelGeneration, 
-                                                                as: 'downLines',
-                                                                include: [
-                                                                    {
-                                                                        model: DistributorLevelGeneration, 
-                                                                        as: 'downLines'
-                                                                    }
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            });
+                                    //     if (upLineToUpgradesUpLine) {
+                                    //         const downs = await DistributorLevelGeneration.findOne({
+                                    //             transaction: transaction,
+                                    //             where: {
+                                    //                 levelId: nextLevel.id,
+                                    //                 username: upLineToUpgradesUpLine.upLineUsername
+                                    //             },
+                                    //             include: [
+                                    //                 { 
+                                    //                     model: DistributorLevelGeneration, 
+                                    //                     as: 'downLines',
+                                    //                     include: [
+                                    //                         {
+                                    //                             model: DistributorLevelGeneration, 
+                                    //                             as: 'downLines',
+                                    //                             include: [
+                                    //                                 {
+                                    //                                     model: DistributorLevelGeneration, 
+                                    //                                     as: 'downLines'
+                                    //                                 }
+                                    //                             ]
+                                    //                         }
+                                    //                     ]
+                                    //                 }
+                                    //             ]
+                                    //         });
 
-                                            console.log(downs);
+                                    //         console.log(downs);
 
-                                            let totalDownLines = 0;
+                                    //         let totalDownLines = 0;
                                             
-                                            for (let d of downs.downLines) {
-                                                totalDownLines++;
-                                                console.log('down line', d.username);
+                                    //         for (let d of downs.downLines) {
+                                    //             totalDownLines++;
+                                    //             console.log('down line', d.username);
                                                 
-                                                for (let d1 of d.downLines) {
-                                                    totalDownLines++;
-                                                    totalDownLines += d1.downLines.length;
+                                    //             for (let d1 of d.downLines) {
+                                    //                 totalDownLines++;
+                                    //                 totalDownLines += d1.downLines.length;
 
-                                                    console.log('downs ', d1.username);
-                                                }
-                                            }
+                                    //                 console.log('downs ', d1.username);
+                                    //             }
+                                    //         }
 
-                                            console.log(totalDownLines);
+                                    //         console.log(totalDownLines);
 
-                                            if (totalDownLines == 14) {
-                                                console.log('upgrade this up line to the next level.')
-                                                nextLevel = await DistributorLevelActions.findNextLevel(nextLevel.id, transaction);
+                                    //         if (totalDownLines == 14) {
+                                    //             console.log('upgrade this up line to the next level.')
+                                    //             nextLevel = await DistributorLevelActions.findNextLevel(nextLevel.id, transaction);
 
-                                                keepLooping = true;
-                                                continue;
-                                            } else {
-                                                console.log('you need up to ' + 14 - totalDownLines + ' to qualify' )
-                                            }
-                                        }
-                                    }
+                                    //             keepLooping = true;
+                                    //             continue;
+                                    //         } else {
+                                    //             console.log('you need up to ' + 14 - totalDownLines + ' to qualify' )
+                                    //         }
+                                    //     }
+                                    // }
 
                                     // check if this down line is at the right or the up line.
                                     // get the entire level generation of the up line
@@ -443,8 +581,8 @@ module.exports = app => {
                 }
             }
 
-            transaction.rollback();
-            // transaction.commit();
+            // transaction.rollback();
+            transaction.commit();
             res.status(201).send({dist: createdDistributor, sec: secondUpUpLine});
         } catch(error) {
             transaction.rollback();
@@ -456,7 +594,37 @@ module.exports = app => {
     app.post(`${BASE_URL}/distributors/auth`, async (req, res) => {
         try {
             console.log(req.body);
-            const distributor = await DistributorActions.findDistributor(req.body.username);
+            const distributor = await DistributorActions
+                .findDistributorWithWallet(req.body.username);
+            res.send(distributor);
+        } catch(error) {
+            res.sendStatus(500);
+            console.error(error);
+        }
+    });
+
+    app.patch(`${BASE_URL}/distributors/:username/change-name`, async (req, res) => {
+        try {
+            const distributor = await DistributorActions.changeName(
+                req.params.username,
+                req.body.firstName,
+                req.body.lastName
+            );
+
+            res.send(distributor);
+        } catch(error) {
+            res.sendStatus(500);
+            console.error(error);
+        }
+    });
+
+    app.patch(`${BASE_URL}/distributors/:username/change-password`, async (req, res) => {
+        try {
+            const distributor = await DistributorActions.changePassword(
+                req.params.username,
+                bcryptjs.hashSync(req.body.newPassword, 10)
+            );
+
             res.send(distributor);
         } catch(error) {
             res.sendStatus(500);

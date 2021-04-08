@@ -1,5 +1,5 @@
 
-const { DistributorWallet } = require("../../sequelize/models/index");
+const { DistributorWallet, Sequelize } = require("../../sequelize/models/index");
 const DistributorWalletData = require("../data/distributorwallet.dataclass");
 
 module.exports = class DistributorWalletActions {
@@ -15,5 +15,33 @@ module.exports = class DistributorWalletActions {
         }, {
             transaction: sequelizeTransaction
         });
+    }
+
+    static findOne(walletId, sequelizeTransaction = null) {
+        return DistributorWallet.findByPk(walletId, {
+            transaction: sequelizeTransaction
+        });
+    }
+    
+    static debit(walletTransaction, transaction = null) {
+        return DistributorWallet.update({
+            balance: Sequelize.literal(`balance - ${walletTransaction.amount}`)
+        }, {
+            transaction: transaction,
+            where: { id: walletTransaction.distributorWalletId }
+        })
+        .then(() => DistributorWallet.findByPk(walletTransaction.distributorWalletId, 
+            { transaction: transaction }));
+    }
+
+    static credit(walletTransaction, transaction = null) {
+        return DistributorWallet.update({
+            balance: Sequelize.literal(`balance + ${walletTransaction.amount}`)
+        }, {
+            transaction: transaction,
+            where: { id: walletTransaction.distributorWalletId }
+        })
+        .then(() => DistributorWallet.findByPk(walletTransaction.distributorWalletId, 
+            { transaction: transaction }));
     }
 }

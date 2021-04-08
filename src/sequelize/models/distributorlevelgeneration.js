@@ -46,6 +46,12 @@ module.exports = (sequelize, DataTypes) => {
       as: 'upLine',
       foreignKey: 'upLineUsername'
     });
+    
+    // associations can be defined here
+    DistributorLevelGeneration.belongsTo(models.DistributorLevelGeneration, {
+      as: 'parent',
+      foreignKey: 'parentId'
+    });
 
     DistributorLevelGeneration.hasMany(models.DistributorLevelGeneration, {
       as: 'downLines',

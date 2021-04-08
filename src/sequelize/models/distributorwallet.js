@@ -27,6 +27,10 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
   DistributorWallet.associate = function(models) {
     // associations can be defined here
+    DistributorWallet.belongsTo(models.Distributor, {
+      as: 'distributor',
+      foreignKey: 'distributorUsername'
+    });
   };
   return DistributorWallet;
 };

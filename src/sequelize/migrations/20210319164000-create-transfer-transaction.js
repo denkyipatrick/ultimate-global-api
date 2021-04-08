@@ -1,13 +1,13 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('DistributorLevelGenerations', {
+    return queryInterface.createTable('TransferTransactions', {
       id: {
         primaryKey: true,
         type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDv4
+        defaultValue: Sequelize.UUIDV4
       },
-      distributorUsername: {
+      senderUsername: {
         type: Sequelize.STRING,
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
@@ -16,41 +16,35 @@ module.exports = {
           model: 'Distributors'
         }
       },
-      distributorLevel: {
-        type: Sequelize.UUID,
+      receiverUsername: {
+        type: Sequelize.STRING,
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
+        references: {
+          key: 'username',
+          model: 'Distributors'
+        }
+      },
+      transactionId: {
+        type: Sequelize.UUID,
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
         references: {
           key: 'id',
-          model: 'DistributorLevels'
+          model: 'WalletTransactions'
         }
-      },
-      downLineUsername: {
-        type: Sequelize.STRING,
-        onDelete: 'SET NULL',
-        onUpdate: 'CASCADE',
-        references: {
-          key: 'username',
-          model: 'Distributors'
-        }
-      },
-      downLinePosition: {
-        type: Sequelize.ENUM,
-        values: ['left', 'right']
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.BIGINT,
-        defaultValue: new Date().getTime()
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.BIGINT,
-        defaultValue: new Date().getTime()
+        type: Sequelize.DATE
       }
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('DistributorLevelGenerations');
+    return queryInterface.dropTable('TransferTransactions');
   }
 };
