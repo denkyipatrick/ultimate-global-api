@@ -208,7 +208,11 @@ module.exports = class DistributorActions {
         });
     }
 
-    
+    /**
+     * Determines whether a distributor qualifies for the next level.
+     * @param {DistributorLevelGeneration} distributorLevelGeneration 
+     * @returns boolean
+     */
     static async doesDistributorQualifyForNextLevel(distributorLevelGeneration) {
         let result = true;
 
@@ -220,7 +224,30 @@ module.exports = class DistributorActions {
                 }
             }
         } else {
-            result = false;
+            let breakFromOuterLoop = false;
+
+            for (const downLine of distributorLevelGeneration.downLines) {
+                if (downLine.downLines && downLine.downLines.length < 2 || breakFromOuterLoop) {
+                    result = false;
+                    break;
+                }
+
+                for(const secondLevelDownLine of downLine.downLines) {
+                    if (secondLevelDownLine.downLines && secondLevelDownLine.downLines.length < 2 || breakFromOuterLoop) {
+                        result = false;
+                        breakFromOuterLoop = true;
+                        break;
+                    }
+
+                    for (const thirdLevelDownLine of secondLevelDownLine.downLines) {
+                        if (thirdLevelDownLine.downLines && thirdLevelDownLine.downLines.length < 2) {
+                            result = false;
+                            breakFromOuterLoop = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         return result;

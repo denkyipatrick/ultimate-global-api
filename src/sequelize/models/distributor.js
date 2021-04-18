@@ -14,21 +14,26 @@ module.exports = (sequelize, DataTypes) => {
     sponsorUsername: {
       type: DataTypes.STRING
     },
-    // upLineUsername: {
-    //   type: DataTypes.STRING
-    // },
     distributorLevelId: {
       type: DataTypes.UUID
+    },    
+    phoneNumber: {
+      type: DataTypes.STRING
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.BIGINT,
-      defaultValue: new Date().getTime()
+    emailAddress: {
+      type: DataTypes.STRING
     },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.BIGINT,
-      defaultValue: new Date().getTime()
+    bankName: {
+      type: DataTypes.STRING
+    },
+    swiftCode: {
+      type: DataTypes.STRING
+    },
+    accountNumber: {
+      type: DataTypes.STRING
+    },
+    nextOfKinName: {
+      type: DataTypes.STRING
     }
   }, {});
   Distributor.associate = function(models) {

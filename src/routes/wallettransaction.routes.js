@@ -4,7 +4,7 @@ const TransferTransactionActions = require("../classes/action/transfertransactio
 const WalletTransactionActions = require("../classes/action/wallettransaction.action");
 const TransferTransactionData = require("../classes/data/transfertransaction.data");
 const WalletTransactionData = require("../classes/data/wallettransaction.data");
-const { sequelize } = require('../sequelize/models/index');
+const { DistributorWallet, WalletTransaction, sequelize, Sequelize } = require('../sequelize/models/index');
 
 module.exports = app => {
     app.post('/api/wallettransactions', async (req, res) => {
@@ -50,7 +50,31 @@ module.exports = app => {
                     walletTransaction.setDataValue('transfer', transfer);
                     break;
                 }
-                case 'deposit': 
+                case 'deposit': {
+                    const wallet = await DistributorWallet.findOne({
+                        transaction: sequelizeTransaction,
+                        where: { distributorUsername: req.body.distributorUsername }
+                    });
+
+                    if (!wallet) {
+                        sequelizeTransaction.rollback();
+                        return res.sendStatus(400);
+                    }
+
+                    walletTransaction = await WalletTransactionActions.create(
+                        new WalletTransactionData(null, wallet.id, 
+                            +req.body.amount, req.body.type, true),
+                        sequelizeTransaction
+                    );
+
+                    await DistributorWallet.update({
+                        balance: Sequelize.literal(`balance + ${walletTransaction.amount}`)
+                    }, {
+                        transaction: sequelizeTransaction,
+                        where: { id: wallet.id }
+                    });
+                    break;
+                }
                 case 'withdrawal': {
                     walletTransaction = await WalletTransactionActions.create(
                         new WalletTransactionData(null, req.body.walletId, 
@@ -63,7 +87,6 @@ module.exports = app => {
                 }
             }
             
-            console.log(walletTransaction);
             sequelizeTransaction.commit();
             res.status(201).send(walletTransaction);
         } catch(error) {

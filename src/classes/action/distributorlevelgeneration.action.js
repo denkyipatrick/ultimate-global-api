@@ -20,7 +20,7 @@ module.exports = class DistributorLevelGenerationActions {
             return Promise.reject('left_and_right_occupied');
         }
 
-        const distributorUpLineStarterStageRecord = await DistributorLevelGeneration.findOne({
+        const distributorUpLineStageRecord = await DistributorLevelGeneration.findOne({
             transaction: sequelizeTransaction,
             where: { 
                 [Sequelize.Op.and]: [
@@ -31,7 +31,7 @@ module.exports = class DistributorLevelGenerationActions {
         });
 
         return DistributorLevelGeneration.create({
-            parentId: distributorUpLineStarterStageRecord.id, 
+            parentId: distributorUpLineStageRecord.id, 
             levelId: levelId,
             position: downLinePosition,
             username: downLineUsername,
@@ -52,6 +52,10 @@ module.exports = class DistributorLevelGenerationActions {
                 ]}
             ]
         });
+
+        if (distributorLevel.username === 'admin') {
+            return distributorLevel;
+        }
 
         return distributorLevel ? distributorLevel.parent : null;
     }

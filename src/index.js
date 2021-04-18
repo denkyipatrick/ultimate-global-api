@@ -8,7 +8,7 @@ const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-app.set("port", process.env.NODE_PORT);
+app.set("port", process.env.NODE_PORT || 3000);
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
@@ -18,6 +18,7 @@ app.use((req, res, next) => {
 
 require("./routes/admin.routes")(app);
 require("./routes/message.routes")(app);
+require("./routes/adminnews.routes")(app);
 require("./routes/distributor.routes")(app);
 require("./routes/notification.routes")(app);
 require("./routes/distributorlevel.routes")(app);

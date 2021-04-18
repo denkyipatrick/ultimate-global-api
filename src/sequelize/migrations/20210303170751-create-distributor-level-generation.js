@@ -37,14 +37,12 @@ module.exports = {
         defaultValue: 'left'
       },
       createdAt: {
-        allowNull: false,
-        type: Sequelize.BIGINT,
-        defaultValue: new Date().getTime()
+        type: Sequelize.DATE,
+        defaultValue: new Date()
       },
       updatedAt: {
-        allowNull: false,
-        type: Sequelize.BIGINT,
-        defaultValue: new Date().getTime()
+        type: Sequelize.DATE,
+        defaultValue: new Date()
       }
     });
   },
