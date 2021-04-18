@@ -16,6 +16,9 @@ const {
     DistributorLevelGeneration 
 } = require("../sequelize/models");
 
+const { validationResult } = require('express-validator');
+const postDistributorValidators = require('../validators/createdistributor.validator');
+
 const bcryptjs = require('bcryptjs');
 
 module.exports = app => {
@@ -97,7 +100,7 @@ module.exports = app => {
         }
     });
 
-    app.post(`${BASE_URL}/distributors`, createDistributor);
+    app.post(`${BASE_URL}/distributors`, postDistributorValidators , createDistributor);
     
     app.post(`${BASE_URL}/distributors/auth`, async (req, res) => {
         try {
@@ -286,8 +289,16 @@ async function addUpLineIncentive(downLineUsername, levelId, transaction = null)
 }
 
 async function createDistributor(req, res) {
-    let transaction = await sequelize.transaction();
     console.log(req.body);
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        return res.status(400).send(errors);
+    }
+
+    let transaction = await sequelize.transaction();
 
     try {
         const STARTER_STAGE_ID = "starter_stage_1";
@@ -295,15 +306,21 @@ async function createDistributor(req, res) {
         
         const createdDistributor = await DistributorActions.createDistributor(
             new DistributorData(
-                req.body.username, 
-                req.body.password,
+                req.body.username,
+                bcryptjs.hashSync(req.body.password, 10),
                 req.body.lastName,
                 req.body.firstName,
                 req.body.phoneNumber,
                 req.body.sponsorUsername, 
-                req.body.upLineUsername),
+                req.body.upLineUsername,
+                req.body.email,
+                req.body.dob,
+                req.body.city,
+                req.body.country),
             transaction
         );
+
+        console.log(createdDistributor);
         
         const TEN_DOLLARS = 10;
 

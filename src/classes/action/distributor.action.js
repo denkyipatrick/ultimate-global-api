@@ -21,11 +21,15 @@ module.exports = class DistributorActions {
      */
     static createDistributor(distributor, sequelizeTransaction = null) {
         return Distributor.create({
+            city: distributor.city,
+            country: distributor.country,
+            password: distributor.password,
             username: distributor.username,
             lastName: distributor.lastName,
             firstName: distributor.firstName,
             phoneNumber: distributor.phoneNumber,
             distributorLevelId: "starter_stage_1",
+            emailAddress: distributor.emailAddress,
             upLineUsername: distributor.upLineUsername,
             sponsorUsername: distributor.sponsorUsername
         }, {

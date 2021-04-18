@@ -10,13 +10,19 @@ module.exports = class DistributorData {
      */
     constructor(username, password, 
         lastName, firstName, phoneNumber, 
-        sponsorUsername, upLineUsername, 
+        sponsorUsername, upLineUsername,
+        emailAddress, dateOfBirth,
+        city, country,
         distributorLevel = null) {
+        this.city = city;
+        this.country = country;
         this.username = username;
         this.lastName = lastName;
         this.password = password;
         this.firstName = firstName;
+        this.dateOfBirth = dateOfBirth;
         this.phoneNumber = phoneNumber;
+        this.emailAddress = emailAddress;
         this.upLineUsername = upLineUsername;
         this.sponsorUsername = sponsorUsername;
         this.distributorLevel = distributorLevel;

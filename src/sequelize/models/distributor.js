@@ -23,6 +23,15 @@ module.exports = (sequelize, DataTypes) => {
     emailAddress: {
       type: DataTypes.STRING
     },
+    // dateOfBirth: {
+    //   type: DataTypes.STRING
+    // },
+    city: {
+      type: DataTypes.STRING
+    },
+    country: {
+      type: DataTypes.STRING
+    },
     bankName: {
       type: DataTypes.STRING
     },

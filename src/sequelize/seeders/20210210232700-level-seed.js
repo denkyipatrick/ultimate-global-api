@@ -62,7 +62,7 @@ module.exports = {
         updatedAt: new Date().getTime()
       },
       { 
-        id: 'double_crown_stage_7', 
+        id: 'double_crown_diamond_stage_7', 
         name: "Double Crown Diamond", 
         number: 7,
         incentiveAmount: 4250,

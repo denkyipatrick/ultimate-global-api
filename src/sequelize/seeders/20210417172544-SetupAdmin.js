@@ -64,12 +64,36 @@ module.exports = {
         username: FIRST_ACCOUNT_USERNAME,
         position: 'none',
         levelId: 'diamond_stage_5',
+      },
+      {
+        id: 'admin_crown_diamond_level',
+        username: FIRST_ACCOUNT_USERNAME,
+        position: 'none',
+        levelId: 'crown_diamond_stage_6',
+      },
+      {
+        id: 'admin_double_crown_diamond_level',
+        username: FIRST_ACCOUNT_USERNAME,
+        position: 'none',
+        levelId: 'double_crown_diamond_stage_7',
+      },
+      {
+        id: 'admin_super_crown_diamond_level',
+        username: FIRST_ACCOUNT_USERNAME,
+        position: 'none',
+        levelId: 'super_crown_diamond_stage_8',
+      },
+      {
+        id: 'admin_infinity_level',
+        username: FIRST_ACCOUNT_USERNAME,
+        position: 'none',
+        levelId: 'infinity_stage_9',
       }
     ]);
    })
    .then(() => {
      return queryInterface.bulkUpdate('Distributors', {
-       distributorLevelId: 'diamond_stage_5'
+       distributorLevelId: 'infinity_stage_9'
      }, { username: FIRST_ACCOUNT_USERNAME }
      );
    })
