@@ -213,8 +213,56 @@ module.exports = class DistributorActions {
      * @param {DistributorLevelGeneration} distributorLevelGeneration 
      * @returns boolean
      */
-    static async doesDistributorQualifyForNextLevel(distributorLevelGeneration) {
+    // static async doesDistributorQualifyForNextLevel(distributorLevelGeneration) {
+    //     let result = true;
+
+    //     if (distributorLevelGeneration.levelId === 'starter_stage_1') {
+    //         for (const downLine of distributorLevelGeneration.downLines) {
+    //             if (downLine.downLines.length != 2) {
+    //                 result = false;
+    //                 break;
+    //             }
+    //         }
+    //     } else {
+    //         let breakFromOuterLoop = false;
+
+    //         for (const downLine of distributorLevelGeneration.downLines) {
+    //             if (downLine.downLines && downLine.downLines.length < 2 || breakFromOuterLoop) {
+    //                 result = false;
+    //                 break;
+    //             }
+
+    //             for(const secondLevelDownLine of downLine.downLines) {
+    //                 if (secondLevelDownLine.downLines && secondLevelDownLine.downLines.length < 2 || breakFromOuterLoop) {
+    //                     result = false;
+    //                     breakFromOuterLoop = true;
+    //                     break;
+    //                 }
+
+    //                 for (const thirdLevelDownLine of secondLevelDownLine.downLines) {
+    //                     if (thirdLevelDownLine.downLines && thirdLevelDownLine.downLines.length < 2) {
+    //                         result = false;
+    //                         breakFromOuterLoop = true;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return result;
+    // }
+    
+    /**
+     * Determines whether a distributor qualifies for the next level.
+     * @param {string} username 
+     * @returns boolean
+     */
+     static async doesDistributorQualifyForNextLevel(username, currentLevelId, sequelizeTransaction = null) {
         let result = true;
+
+        const distributorLevelGeneration = await this.findDistributorLevelGeneration(
+            username, currentLevelId, sequelizeTransaction);
 
         if (distributorLevelGeneration.levelId === 'starter_stage_1') {
             for (const downLine of distributorLevelGeneration.downLines) {
@@ -326,17 +374,39 @@ module.exports = class DistributorActions {
             },
             include: [
                 { model: Distributor, as: 'distributor', include: ['stage'] },
-                { model: DistributorLevelGeneration, as: 'downLines', include: [
-                    { model: Distributor, as: 'distributor', include: ['stage'] },
-                    { model: DistributorLevelGeneration, as: 'downLines', include: [
+                { 
+                    model: DistributorLevelGeneration,
+                    as: 'downLines',
+                    order: [['createdAt', 'ASC']],
+                    include: [
                         { model: Distributor, as: 'distributor', include: ['stage'] },
-                        { model: DistributorLevelGeneration, as: 'downLines', include: [
-                            { model: Distributor, as: 'distributor', include: ['stage'] },
-                        ] }
-                    ] }
-                ]}
+                        { 
+                            model: DistributorLevelGeneration,
+                            as: 'downLines',
+                            order: [['createdAt', 'ASC']],
+                            include: [
+                                { model: Distributor, as: 'distributor', include: ['stage'] },
+                                { model: DistributorLevelGeneration,
+                                    as: 'downLines',
+                                    order: [['createdAt', 'ASC']],
+                                    include: [
+                                        { model: Distributor, as: 'distributor', include: ['stage'] },
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
             ]
         });
+    }
+
+    static async isDistributorAlreadyInLevel(username, levelId, transaction = null) {
+        return await this.findDistributorLevelGeneration(
+            username,
+            levelId,
+            transaction) ?
+            true : false
     }
 
     static async getDistributorLevelUpLine(username, levelId, transaction = null) {
