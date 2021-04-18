@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
     number: {
       type: DataTypes.INTEGER
     },
+    incentiveAmount: {
+      type: DataTypes.DOUBLE(10, 4)
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.BIGINT,

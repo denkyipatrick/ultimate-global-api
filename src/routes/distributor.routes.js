@@ -11,6 +11,8 @@ const {
     Notification,
     Distributor,
     AdminNews,
+    DistributorWallet,
+    DistributorLevel,
     DistributorLevelGeneration 
 } = require("../sequelize/models");
 
@@ -204,13 +206,92 @@ module.exports = app => {
     });
 }
 
+async function addUpLineIncentive(downLineUsername, levelId, transaction = null) {
+    console.log('adding incentive');
+    const usernames = [];
+
+    const level = await DistributorLevel
+        .findByPk(levelId, { transaction: transaction });
+
+    if (level.id === 'starter_stage_1') {
+        console.log('stage 1');
+        const upLine = await DistributorLevelGeneration.findOne({
+            transaction: transaction,
+            where: {
+                levelId: level.id,
+                username: downLineUsername
+            },
+            include: [
+                { model: DistributorLevelGeneration, as: 'parent', include: ['parent'] }
+            ]
+        });
+
+        if (upLine) {
+            usernames.push(
+                upLine.parent &&
+                upLine.parent.username);
+
+            usernames.push(
+                upLine.parent &&
+                upLine.parent.parent &&
+                upLine.parent.parent.username);
+        }
+
+        // console.log(upLine);
+    } else {
+        console.log('stage other');
+        const upLine = await DistributorLevelGeneration.findOne({
+            transaction: transaction,
+            where: {
+                levelId: level.id,
+                username: downLineUsername
+            },
+            include: [
+                { model: DistributorLevelGeneration, as: 'parent', include: [
+                    { model: DistributorLevelGeneration, as: 'parent', include: ['parent'] }
+                ] }
+            ]
+        });
+
+        if (upLine) {
+            usernames.push(
+                upLine.parent &&
+                upLine.parent.username);
+
+            usernames.push(
+                upLine.parent &&
+                upLine.parent.parent &&
+                upLine.parent.parent.username);
+
+            usernames.push(
+                upLine.parent &&
+                upLine.parent.parent &&
+                upLine.parent.parent.parent &&
+                upLine.parent.parent.parent.username);
+        }
+    }
+
+    await DistributorWallet.update({
+        balance: Sequelize.literal(`balance + ${level.incentiveAmount}`)
+    }, {
+        transaction: transaction,
+        where: {
+            distributorUsername: {
+                [Sequelize.Op.in]: usernames
+            }
+        }
+    });
+
+    console.log(usernames, level.incentiveAmount);
+}
+
 async function createDistributor(req, res) {
     let transaction = await sequelize.transaction();
     console.log(req.body);
 
     try {
         const STARTER_STAGE_ID = "starter_stage_1";
-        let CURRENT_LEVEL_ID = STARTER_STAGE_ID;        
+        let CURRENT_LEVEL_ID = STARTER_STAGE_ID;
         
         const createdDistributor = await DistributorActions.createDistributor(
             new DistributorData(
@@ -241,6 +322,8 @@ async function createDistributor(req, res) {
         console.log('has passed beginning');
 
         while(true) {
+            await addUpLineIncentive(newDownLine.username, CURRENT_LEVEL_ID, transaction);
+
             let upLineToUpgrade = null;
             let nextLevel = await DistributorLevelActions
                 .findNextLevel(CURRENT_LEVEL_ID, transaction);
@@ -327,7 +410,7 @@ async function createDistributor(req, res) {
                     nextLevel.id,
                     transaction);
 
-            console.log('newDownLine', newDownLine);
+            // console.log('newDownLine', newDownLine);
                 
             // Upgrade upLineToUpgrade's current level
             await DistributorActions.upgradeDistributorToNextStage(
