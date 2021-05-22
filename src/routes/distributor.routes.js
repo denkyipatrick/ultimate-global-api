@@ -107,6 +107,10 @@ module.exports = app => {
             const distributor = await DistributorActions
                 .findDistributorWithWallet(req.body.username);
 
+            if ( !distributor || !bcryptjs.compareSync(req.body.password, distributor.password)) {
+                return res.sendStatus(400);
+            }
+
             const news = await AdminNews.findOne({
                 where: { isLatest: true }
             });
@@ -290,11 +294,9 @@ async function addUpLineIncentive(downLineUsername, levelId, transaction = null)
 
 async function createDistributor(req, res) {
     console.log(req.body);
-
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        console.log(errors);
         return res.status(400).send(errors);
     }
 
@@ -319,8 +321,6 @@ async function createDistributor(req, res) {
                 req.body.country),
             transaction
         );
-
-        console.log(createdDistributor);
         
         const TEN_DOLLARS = 10;
 
@@ -330,7 +330,7 @@ async function createDistributor(req, res) {
         createdDistributor.setDataValue('wallet', distributorWallet);
 
         await DistributorActions.deductDistributorWallet(
-            createdDistributor.sponsorUsername, TEN_DOLLARS, transaction);
+            req.body.registrarSponsorUsername, TEN_DOLLARS, transaction);
 
         let newDownLine = await DistributorLevelGenerationActions
             .createLevelDownLine(req.body.upLineUsername, 
@@ -444,8 +444,8 @@ async function createDistributor(req, res) {
             CURRENT_LEVEL_ID = nextLevel.id;
         }
         
-        transaction.commit();
-        // transaction.rollback();
+        // transaction.commit();
+        transaction.rollback();
         res.status(201).send(createdDistributor);
     } catch(error) {
         transaction.rollback();

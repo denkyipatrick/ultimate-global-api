@@ -38,7 +38,19 @@ const validators = [
             }
         });
     })
-    .bail()
+    .bail(),
+    // .custom(async username => {
+    //     const sponsorWallet = await DistributorWallet.findOne({
+    //         where: {
+    //             distributorUsername: username
+    //         }
+    //     });
+
+    //     if (sponsorWallet.balance < 5) { // } 10 < 0) {
+    //         return Promise.reject("Sponsor has insufficient balance.");
+    //     }
+    // })
+    body('registrarSponsorUsername')
     .custom(async username => {
         const sponsorWallet = await DistributorWallet.findOne({
             where: {
@@ -47,9 +59,10 @@ const validators = [
         });
 
         if (sponsorWallet.balance - 10 < 0) {
-            return Promise.reject("Sponsor has insufficient balance.");
+            return Promise.reject("You have insufficient balance.");
         }
-    }),
+    })
+    .bail(),
     body('upLineUsername')
     .notEmpty()
     .withMessage('upLine username cannot be empty.')
@@ -71,10 +84,13 @@ const validators = [
         });
 
         if (upLineStarterGeneration.downLines.length === 2) {
-            return Promise.reject('UpLine immediate down lines are occupied.')
+            return Promise.reject('UpLine\'s immediate down lines are occupied. Change upline.')
         }
     }),
-    body('email').isEmail().normalizeEmail()
+    body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Email address is invalid.')
 ]
 
 module.exports = validators;

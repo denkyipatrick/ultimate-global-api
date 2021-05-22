@@ -15,15 +15,28 @@ module.exports = {
         isBetaMember: false
       }], {});
     */
-
-   return queryInterface.bulkInsert('Distributors', [
-     { 
-       username: FIRST_ACCOUNT_USERNAME,
-       lastName: 'Account',
-       firstName: 'Main Admin',
-       password: bcryptjs.hashSync('password', 10)
-    }
-   ])
+    return queryInterface.bulkInsert('Admins', [
+      {
+        username: 'admin',
+        lastName: 'Admin',
+        firstName: 'Admin',
+        password: bcryptjs.hashSync('password', 10)
+      }
+    ])
+    .then(() => {
+      return queryInterface.bulkInsert('Distributors', [
+        { 
+          username: FIRST_ACCOUNT_USERNAME,
+          lastName: 'Account',
+          firstName: 'Main Admin',
+          phoneNumber: '024755555',
+          bankName: 'Bank',
+          accountNumber: 'XXX XXX XXXX',
+          emailAddress: 'admin@ultimatelifeglobal.com',
+          password: bcryptjs.hashSync('password', 10)
+        }
+      ]);
+    })
    .then(() => {
      return queryInterface.bulkInsert('DistributorWallets', [
        {
@@ -107,13 +120,18 @@ module.exports = {
       Example:
       return queryInterface.bulkDelete('People', null, {});
     */
-   return queryInterface.bulkDelete('DistributorLevelGenerations', 
-     { username: FIRST_ACCOUNT_USERNAME }
-   )
-   .then(() => {
-     return queryInterface.bulkDelete('Distributors', 
+   return queryInterface.bulkDelete('Admins', 
+     { username: 'admin' }
+    )
+    .then(() => {
+      return queryInterface.bulkDelete('DistributorLevelGenerations', 
         { username: FIRST_ACCOUNT_USERNAME }
-     );
-   });
+      )
+      .then(() => {
+        return queryInterface.bulkDelete('Distributors', 
+           { username: FIRST_ACCOUNT_USERNAME }
+        );
+      });
+    });
   }
 };
