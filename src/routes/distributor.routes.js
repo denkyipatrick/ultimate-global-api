@@ -37,6 +37,30 @@ module.exports = app => {
         }));
     });
     
+    app.get(`${BASE_URL}/distributors/:username/recent-downlines`, async (req, res) => {
+       try {
+            const distributor = await DistributorLevelGeneration.findOne({
+                where: {
+                    levelId: 'starter_stage_1',
+                    username: req.params.username
+                },
+                include: [{
+                    model: DistributorLevelGeneration, as: 'downLines',
+                    include: ['distributor'],
+                    order: [['createdAt', 'DESC']],
+                    offset: 0,
+                    limit: 10
+                }]
+            });
+
+            res.send(distributor.downLines);
+       } catch(error) {
+           res.sendStatus(500);
+           console.error(error);
+       }
+    });
+    
+    
     app.get(`${BASE_URL}/distributors/:username/notifications`, async (req, res) => {
         try {
             const notifications = await Notification.findAll({
@@ -110,6 +134,14 @@ module.exports = app => {
             if ( !distributor || !bcryptjs.compareSync(req.body.password, distributor.password)) {
                 return res.sendStatus(400);
             }
+
+            await Distributor.update({
+                lastLogin: new Date()
+            }, {
+                where: {
+                    username: distributor.username
+                }
+            });
 
             const news = await AdminNews.findOne({
                 where: { isLatest: true }
@@ -445,7 +477,7 @@ async function createDistributor(req, res) {
         }
         
         // transaction.commit();
-        transaction.rollback();
+        transaction.commit();
         res.status(201).send(createdDistributor);
     } catch(error) {
         transaction.rollback();

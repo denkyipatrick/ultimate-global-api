@@ -23,16 +23,6 @@ module.exports = (sequelize, DataTypes) => {
       values: ['none', 'left', 'right'],
       defaultValue: 'left'
     }
-    // createdAt: {
-    //   allowNull: false,
-    //   type: DataTypes.BIGINT,
-    //   defaultValue: new Date().getTime()
-    // },
-    // updatedAt: {
-    //   allowNull: false,
-    //   type: DataTypes.BIGINT,
-    //   defaultValue: new Date().getTime()
-    // }
   }, {});
   DistributorLevelGeneration.associate = function(models) {
     // associations can be defined here
