@@ -36,6 +36,48 @@ module.exports = app => {
             ]
         }));
     });
+
+    app.get(`${BASE_URL}/distributors/:username/total-downlines`, async (req, res) => {
+        try {
+            const distributor = await DistributorLevelGeneration.findOne({
+                where: {
+                    username: req.params.username,
+                    levelId: 'starter_stage_1'
+                },
+                include: ['downLines']
+            });
+
+            const leftDownLine = distributor.downLines.length && distributor.downLines[0];
+            const rightDownLine = distributor.downLines.length && distributor.downLines[1];
+
+            async function getTeamCount(username) {
+                return await sequelize.query(`
+                    with recursive generations(id, parentId, username) as (
+                        select id, parentId, username
+                        from DistributorLevelGenerations where username = '${username}' 
+                        and levelId = 'starter_stage_1' 
+                        union all 
+                        select d.id, d.parentId, d.username from DistributorLevelGenerations d 
+                        inner join generations d2 
+                        on d.parentId = d2.id 
+                        where levelId = 'starter_stage_1'
+                    )
+                    select id, parentId, username from generations`);
+            }
+
+            const leftTeamCount = await getTeamCount(leftDownLine.username);
+            const rightTeamCount = await getTeamCount(rightDownLine.username);
+
+            res.send({
+                leftCount: leftTeamCount[0].length,
+                rightCount: rightTeamCount[0].length,
+                totalCount: leftTeamCount[0].length + rightTeamCount[0].length
+            });
+        } catch(error) {
+            res.sendStatus(500);
+            console.error(error);
+        }
+    })
     
     app.get(`${BASE_URL}/distributors/:username/recent-downlines`, async (req, res) => {
        try {
