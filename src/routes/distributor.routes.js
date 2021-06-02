@@ -115,8 +115,6 @@ module.exports = app => {
                 where: { isLatest: true }
             });
 
-            console.log(distributor);
-
             res.send({distributor: distributor, latestNews: news});
         } catch(error) {
             res.sendStatus(500);

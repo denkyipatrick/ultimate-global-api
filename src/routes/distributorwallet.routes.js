@@ -48,4 +48,8 @@ module.exports = app => {
     app.patch(`${BASE_URL}/:walletId/set-pin`,
         validators.setPinValidators,
         controllers.WalletController.setWalletPin);
+
+    app.patch(`${BASE_URL}/:walletId/change-pin`,
+        validators.changePinValidators,
+        controllers.WalletController.changeWalletPin);
 }
