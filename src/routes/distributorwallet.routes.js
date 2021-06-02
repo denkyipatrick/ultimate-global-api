@@ -2,6 +2,8 @@
 const { sequelize, DistributorWallet, WalletTransaction } = require('../sequelize/models/index');
 const BASE_URL = `${process.env.BASE_URL}/wallets`;
 const bcryptjs = require('bcryptjs');
+const controllers = require('../controller/index');
+const validators = require('../validators/wallet.validators');
 
 module.exports = app => {
     app.get(`${BASE_URL}/:walletId/transactions`, async (req, res) => {
@@ -42,4 +44,8 @@ module.exports = app => {
             console.error(error);
         }
     });
+
+    app.patch(`${BASE_URL}/:walletId/set-pin`,
+        validators.setPinValidators,
+        controllers.WalletController.setWalletPin);
 }
