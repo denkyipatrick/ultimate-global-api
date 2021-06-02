@@ -46,6 +46,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     nextOfKinName: {
       type: DataTypes.STRING
+    },
+    lastLogin: {
+      type: DataTypes.DATE
     }
   }, {});
   Distributor.associate = function(models) {
