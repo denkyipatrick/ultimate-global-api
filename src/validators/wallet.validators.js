@@ -37,7 +37,6 @@ const setPinValidators = [
     })
 ];
 
-
 const changePinValidators = [
     body('currentPin')
     .exists()

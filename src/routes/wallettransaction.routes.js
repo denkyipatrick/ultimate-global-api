@@ -1,100 +1,20 @@
-const DistributorActions = require("../classes/action/distributor.action");
 const DistributorWalletActions = require("../classes/action/distributorwallet.action");
-const TransferTransactionActions = require("../classes/action/transfertransaction.action");
 const WalletTransactionActions = require("../classes/action/wallettransaction.action");
-const TransferTransactionData = require("../classes/data/transfertransaction.data");
-const WalletTransactionData = require("../classes/data/wallettransaction.data");
-const { DistributorWallet, WalletTransaction, sequelize, Sequelize } = require('../sequelize/models/index');
+const { sequelize, Sequelize } = require('../sequelize/models/index');
+
+const controllers = require('../controller/index');
+const validators = require('../validators/wallettransaction.validator');
 
 module.exports = app => {
-    app.post('/api/wallettransactions', async (req, res) => {
-        console.log(req.body);
-        let sequelizeTransaction = null;
+    // app.post('/api/wallettransactions',
+    //     controllers.WalletTransactionController.newTransaction);
 
-        try {
-            let walletTransaction = null;
-            sequelizeTransaction = await sequelize.transaction();
+    app.post('/api/wallettransactions/withdraw',
+    validators.withdrawTransactionValidators,
+    controllers.WalletTransactionController.newWithdrawTransaction);
 
-            const distributorWallet = await DistributorWalletActions
-                .findOne(req.body.walletId, sequelizeTransaction);
-
-            switch(req.body.type.toLowerCase()) {
-                case 'transfer': {
-                    walletTransaction = await WalletTransactionActions.create(
-                        new WalletTransactionData(
-                            null, distributorWallet.id, +req.body.amount, req.body.type, true), 
-                        sequelizeTransaction
-                    );
-
-                    const transfer = await TransferTransactionActions.create(
-                        new TransferTransactionData(null, 
-                            walletTransaction.id,
-                            distributorWallet.distributorUsername,
-                            req.body.transferReceiverUsername
-                        ),
-                        sequelizeTransaction
-                    );
-
-                    const receiverWallet = await DistributorActions
-                        .findDistributorWallet(req.body.transferReceiverUsername, sequelizeTransaction);
-
-                    const receiverTransaction = await WalletTransactionActions.create(
-                        new WalletTransactionData(
-                            null, receiverWallet.id, +req.body.amount, 'deposit', true
-                        ), sequelizeTransaction
-                    );
-
-                    await DistributorWalletActions
-                        .credit(receiverTransaction, sequelizeTransaction);
-
-                    walletTransaction.setDataValue('transfer', transfer);
-                    break;
-                }
-                case 'deposit': {
-                    const wallet = await DistributorWallet.findOne({
-                        transaction: sequelizeTransaction,
-                        where: { distributorUsername: req.body.distributorUsername }
-                    });
-
-                    if (!wallet) {
-                        sequelizeTransaction.rollback();
-                        return res.sendStatus(400);
-                    }
-
-                    walletTransaction = await WalletTransactionActions.create(
-                        new WalletTransactionData(null, wallet.id, 
-                            +req.body.amount, req.body.type, true),
-                        sequelizeTransaction
-                    );
-
-                    await DistributorWallet.update({
-                        balance: Sequelize.literal(`balance + ${walletTransaction.amount}`)
-                    }, {
-                        transaction: sequelizeTransaction,
-                        where: { id: wallet.id }
-                    });
-                    break;
-                }
-                case 'withdrawal': {
-                    walletTransaction = await WalletTransactionActions.create(
-                        new WalletTransactionData(null, req.body.walletId, 
-                            +req.body.amount, req.body.type),
-                        sequelizeTransaction
-                    );
-                    break;
-                }
-                default: {
-                }
-            }
-            
-            sequelizeTransaction.commit();
-            res.status(201).send(walletTransaction);
-        } catch(error) {
-            res.sendStatus(500);
-            sequelizeTransaction.rollback();
-            console.error(error);
-        }     
-    });
+    app.post('/api/wallettransactions/transfer',
+    controllers.WalletTransactionController.newTransferTransaction);
 
     app.put('/api/wallettransactions/:id', async (req, res) => {
         let sequelizeTransaction = await sequelize.transaction();

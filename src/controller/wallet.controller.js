@@ -7,6 +7,16 @@ const bcryptjs = require('bcryptjs');
 const { validationResult } = require('express-validator');
 
 module.exports = class WalletController {
+    static async authWalletPin(req, res) {
+        const wallet = await DistributorWallet.findByPk(req.params.walletId);
+
+        // if (!bcryptjs.compareSync(req.body.pin, wallet.pin)) {
+        //     return res.sendStatus(400);
+        // }
+
+        res.send()
+    }
+
     static async setWalletPin(req, res) {
         console.log(req.body);
 
@@ -35,12 +45,9 @@ module.exports = class WalletController {
     }
 
     static async changeWalletPin(req, res) {
-        console.log(req.body);
-
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            console.log(errors);
             return res.status(400).send(errors);
         }
 

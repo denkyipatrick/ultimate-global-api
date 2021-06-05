@@ -23,6 +23,9 @@ module.exports = app => {
         }
     });
 
+    app.post(`${BASE_URL}/:walletId/auth`,
+        controllers.WalletController.authWalletPin);
+
     app.patch(`${BASE_URL}/:walletId`, async (req, res) => {
         try {
             const wallet = await DistributorWallet.findByPk(req.params.walletId);
