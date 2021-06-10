@@ -26,10 +26,12 @@ module.exports = app => {
 
     app.post(`${BASE_URL}/messages`, async (req, res) => {
         try {
+            console.log(req.body);
             const message = await Message.create({
                 text: req.body.text,
                 senderUsername: req.body.senderUsername,
-                receiverUsername: req.body.receiverUsername || 'admin'
+                receiverUsername: req.body.receiverUsername || 
+                process.env.FIRST_ACCOUNT_USERNAME
             });
 
             res.status(201).send(message);

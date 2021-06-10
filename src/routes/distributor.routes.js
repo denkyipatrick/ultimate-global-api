@@ -125,6 +125,9 @@ module.exports = app => {
         }
     });
 
+    app.get(`${BASE_URL}/distributors/:username/down-lines/direct`,
+     controllers.DistributorController.fetchDirectDownLines);
+
     app.get(`${BASE_URL}/distributors/:username/generations/:stage`, async (req, res) => {
         console.log(req.params);
         try {
