@@ -54,16 +54,22 @@ module.exports = class AdminController {
                     select id, parentId, username from generations`);
             }
 
-            const leftTeamCount = await getTeamCount(leftDownLine.username);
-            const rightTeamCount = await getTeamCount(rightDownLine.username);
+            const leftTeam = await getTeamCount(leftDownLine.username);
+            const rightTeam = await getTeamCount(rightDownLine.username);
 
-            const ds = await Distributor.count();
+            const ds = await Distributor.count({
+                where: {
+                    username: {
+                        [Sequelize.Op.ne]: 'admin'
+                    }
+                }
+            });
             res.send({
                 wallet: wallet,
                 totalMembers: ds,
                 unViewedMessages: unViewedMessages,
-                totalLeftMembers: leftTeamCount.length,
-                totalRightMembers: rightTeamCount.length
+                totalLeftMembers: leftTeam.length,
+                totalRightMembers: rightTeam.length
             });
         } catch(error) {
             res.sendStatus(500);
