@@ -8,7 +8,7 @@ module.exports = class MessageController {
     static async fetchMessage(req, res) {
         try {
             const message = await Message.findByPk(req.params.id, {
-                include: ['sender']
+                include: ['sender', 'receiver']
             });
 
             res.send(message);

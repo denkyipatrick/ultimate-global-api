@@ -26,6 +26,11 @@ module.exports = (sequelize, DataTypes) => {
       as: 'sender',
       foreignKey: 'senderUsername'
     });
+    
+    Message.belongsTo(models.Distributor, {
+      as: 'receiver',
+      foreignKey: 'receiverUsername'
+    });
   };
   return Message;
 };

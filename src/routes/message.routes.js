@@ -28,8 +28,8 @@ module.exports = app => {
         try {
             const message = await Message.create({
                 text: req.body.text,
-                receiverUsername: req.body.receiverUsername || 'admin',
-                distributorUsername: req.body.senderUsername
+                senderUsername: req.body.senderUsername,
+                receiverUsername: req.body.receiverUsername || 'admin'
             });
 
             res.status(201).send(message);
