@@ -14,7 +14,7 @@ module.exports = class DistributorController {
                 include: [
                     {
                         model: DistributorLevelGeneration, as: 'downLines',
-                        include: ['distributor', 'downLines']
+                        include: ['distributor']
                     }
                 ]
             });
