@@ -9,10 +9,14 @@ module.exports = (sequelize, DataTypes) => {
     text: {
       type: DataTypes.STRING(1024)
     },
-    distributorUsername: {
+    senderUsername: {
+      type: DataTypes.STRING
+    },
+    receiverUsername: {
       type: DataTypes.STRING
     },
     isViewed: {
+      defaultValue: false,
       type: DataTypes.BOOLEAN
     }
   }, {});
@@ -20,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     Message.belongsTo(models.Distributor, {
       as: 'sender',
-      foreignKey: 'distributorUsername'
+      foreignKey: 'senderUsername'
     });
   };
   return Message;

@@ -8,6 +8,8 @@ const {
 const BASE_URL = `${process.env.BASE_URL}`;
 const bcryptjs = require('bcryptjs');
 
+const controllers = require('../controller/index');
+
 module.exports = app => {
     app.get(`${BASE_URL}/admins`, async (req, res) => {
         try {
@@ -18,6 +20,9 @@ module.exports = app => {
             console.error(error);
         }
     });
+
+    app.get(`${BASE_URL}/admins/dashboard`,
+        controllers.AdminController.dashboardData);
 
     app.get(`${BASE_URL}/admins/wallet-transactions/deposits`, async (req, res) => {
         try {

@@ -20,6 +20,7 @@ const { validationResult } = require('express-validator');
 const postDistributorValidators = require('../validators/createdistributor.validator');
 
 const bcryptjs = require('bcryptjs');
+const controllers = require('../controller/index');
 
 module.exports = app => {
     const BASE_URL = process.env.BASE_URL;
@@ -102,6 +103,11 @@ module.exports = app => {
        }
     });
     
+    app.get(`${BASE_URL}/distributors/:username/messages/sent`,
+        controllers.MessageController.fetchDistributorSentMessages);
+        
+    app.get(`${BASE_URL}/distributors/:username/messages/received`,
+        controllers.MessageController.fetchDistributorReceivedMessages);
     
     app.get(`${BASE_URL}/distributors/:username/notifications`, async (req, res) => {
         try {
