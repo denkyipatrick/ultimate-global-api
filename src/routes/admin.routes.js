@@ -1,6 +1,7 @@
 
 const { 
     Admin, 
+    Distributor,
     WalletTransaction, 
     DistributorWallet, 
     Sequelize, 
@@ -29,7 +30,7 @@ module.exports = app => {
             res.send(await WalletTransaction.findAll({
                 where: {
                     type: 'deposit',
-                    isProcessed: false
+                    isProcessed: true
                 },
                 include: {
                     model: DistributorWallet, as: 'wallet', include: ['distributor']
@@ -100,6 +101,28 @@ module.exports = app => {
             res.send(transaction)
         } catch(error) {
             sequelizeTransaction.rollback();
+            res.sendStatus(500);
+            console.error(error);
+        }
+    });
+
+    app.patch(`${BASE_URL}/admins/change-distributor-wallet-pin`,
+        controllers.WalletController.setWalletPin);
+
+    app.patch(`${BASE_URL}/admins/change-distributor-password`, async (req, res) => {
+        try {
+            const distributor = await Distributor.update({
+                password: bcryptjs.hashSync(req.body.password)
+            }, {
+                where: {
+                    username: req.body.distributorUsername
+                }
+            }).then(() => Distributor.findByPk(req.body.distributorUsername, {
+                include: ['wallet']
+            }));
+
+            res.send(distributor);
+        } catch(error) {
             res.sendStatus(500);
             console.error(error);
         }

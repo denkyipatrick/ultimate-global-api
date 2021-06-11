@@ -9,6 +9,49 @@ const { DistributorWallet, WalletTransaction, sequelize, Sequelize } = require('
 const { validationResult } = require('express-validator');
 
 module.exports = class WalletTransactionController {
+    static async newDepositTransaction(req, res) {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            console.error(errors);
+            return res.status(400).send(errors);
+        }
+
+        const sequelizeTransaction = await sequelize.transaction();
+
+        try {
+            const wallet = await DistributorWallet.findOne({
+                transaction: sequelizeTransaction,
+                where: { distributorUsername: req.body.distributorUsername }
+            });
+
+            if (!wallet) {
+                sequelizeTransaction.rollback();
+                return res.sendStatus(400);
+            }
+
+            const walletTransaction = await WalletTransactionActions.create(
+                new WalletTransactionData(null, wallet.id, 
+                    +req.body.amount, req.body.type, true),
+                sequelizeTransaction
+            );
+
+            await DistributorWallet.update({
+                balance: Sequelize.literal(`balance + ${walletTransaction.amount}`)
+            }, {
+                transaction: sequelizeTransaction,
+                where: { id: wallet.id }
+            });
+
+            sequelizeTransaction.commit();
+            res.status(201).send(walletTransaction);
+        } catch(error) {
+            res.sendStatus(500);
+            sequelizeTransaction.rollback();
+            console.error(error);
+        } 
+    }
+
     static async newWithdrawTransaction(req, res) {
         const errors = validationResult(req);
 
@@ -33,7 +76,6 @@ module.exports = class WalletTransactionController {
     }
 
     static async newTransferTransaction(req, res) {
-        console.log(req.body);
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -86,7 +128,6 @@ module.exports = class WalletTransactionController {
             console.error(error);
         } 
     }
-
     
     static async newTransaction(req, res) {
         console.log(req.body);

@@ -6,8 +6,9 @@ const controllers = require('../controller/index');
 const validators = require('../validators/wallettransaction.validator');
 
 module.exports = app => {
-    // app.post('/api/wallettransactions',
-    //     controllers.WalletTransactionController.newTransaction);
+
+    app.post('/api/wallettransactions/deposit',
+    controllers.WalletTransactionController.newDepositTransaction);
 
     app.post('/api/wallettransactions/withdraw',
     validators.withdrawTransactionValidators,

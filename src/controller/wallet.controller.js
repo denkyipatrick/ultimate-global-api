@@ -18,8 +18,6 @@ module.exports = class WalletController {
     }
 
     static async setWalletPin(req, res) {
-        console.log(req.body);
-
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
@@ -31,10 +29,10 @@ module.exports = class WalletController {
             const wallet = await DistributorWallet.update({
                 pin: bcryptjs.hashSync(req.body.pin)
             }, {
-                where: { id: req.params.walletId }
+                where: { id: req.params.walletId || req.body.walletId }
             })
             .then(() => 
-                DistributorWallet.findByPk(req.params.walletId)
+                DistributorWallet.findByPk(req.params.walletId || req.body.walletId)
             );
 
             res.send(wallet);
