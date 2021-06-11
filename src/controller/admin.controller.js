@@ -68,8 +68,8 @@ module.exports = class AdminController {
                 wallet: wallet,
                 totalMembers: ds,
                 unViewedMessages: unViewedMessages,
-                totalLeftMembers: leftTeam.length,
-                totalRightMembers: rightTeam.length
+                totalLeftMembers: leftTeam[0].length,
+                totalRightMembers: rightTeam[0].length
             });
         } catch(error) {
             res.sendStatus(500);

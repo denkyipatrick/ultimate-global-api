@@ -133,11 +133,39 @@ module.exports = app => {
         try {
             let generation = null;
 
+            async function getTeamCount(distributor, stageId) {
+                let count = 0;
+                if (distributor.downLines) {
+                    if (distributor.downLines[0]) {
+                        const totalLeft = await DistributorActions
+                        .getDistributorTeamCount(distributor.downLines[0].username, stageId);
+
+                        distributor.setDataValue('totalLeft', totalLeft[0].length);
+                        count++
+                        await getTeamCount(distributor.downLines[0], stageId)
+                    }
+
+                    if (distributor.downLines[1]) {
+                        const totalRight = await DistributorActions
+                        .getDistributorTeamCount(distributor.downLines[1].username, stageId);
+                            
+                        distributor.setDataValue('totalRight', totalRight[0].length);
+                        count++
+                        await getTeamCount(distributor.downLines[1], stageId);
+                    }
+                }
+
+                console.log(count);
+            }
+
             switch(req.params.stage) {
                 case 'starter': {
                     generation = await DistributorActions.findDistributorLevelGeneration(
                         req.params.username, 'starter_stage_1'
                     );
+                    
+                    await getTeamCount(generation, 'starter_stage_1');
+
                     break;
                 }
                 case 'leader': {

@@ -339,6 +339,31 @@ module.exports = class DistributorActions {
             findNextLevel(distributor.distributorLevelId, transaction);
     }
 
+    static async getDistributorTeamCount(username, levelId, transaction = null) {
+        return await sequelize.query(`
+        with recursive generations(id, parentId, username) as (
+            select id, parentId, username
+            from DistributorLevelGenerations where username = '${username}' 
+            and levelId = '${levelId}'
+            union all 
+            select d.id, d.parentId, d.username from DistributorLevelGenerations d 
+            inner join generations d2 
+            on d.parentId = d2.id 
+            where levelId = '${levelId}'
+        )
+        select id, parentId, username from generations`, {
+            transaction: transaction
+        });
+    }
+
+    static findDistributorTotalLeftCount(username, levelId, transaction = null) {
+        return 
+    }
+
+    static findDistributorTotalRightCount(username, levelId, transaction = null) {
+
+    }
+
     static findDistributorLevelGeneration(username, levelId, transaction = null) {
         if (levelId === 'starter_level_1') {
             return DistributorLevelGeneration.findOne({
