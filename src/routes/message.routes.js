@@ -24,20 +24,8 @@ module.exports = app => {
     app.get(`${BASE_URL}/messages/:id`,
         controller.MessageController.fetchMessage);
 
-    app.post(`${BASE_URL}/messages`, async (req, res) => {
-        try {
-            console.log(req.body);
-            const message = await Message.create({
-                text: req.body.text,
-                senderUsername: req.body.senderUsername,
-                receiverUsername: req.body.receiverUsername || 
-                process.env.FIRST_ACCOUNT_USERNAME
-            });
+    app.post(`${BASE_URL}/messages`, controller.MessageController.createMessage);
 
-            res.status(201).send(message);
-        } catch(error) {
-            res.sendStatus(500);
-            console.error(error);
-        }
-    });
+    app.patch(`${BASE_URL}/messages/:messageId/set-as-viewed`,
+        controller.MessageController.turnToViewed);
 }

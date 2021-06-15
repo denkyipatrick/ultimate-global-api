@@ -51,6 +51,12 @@ const validators = [
     //     }
     // })
     body('registrarSponsorUsername')
+    .exists()
+    .withMessage("Registrar username is invalid")
+    .bail()
+    .notEmpty()
+    .withMessage("Registrar username is invalid")
+    .bail()
     .custom(async username => {
         const sponsorWallet = await DistributorWallet.findOne({
             where: {

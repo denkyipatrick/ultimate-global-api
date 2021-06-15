@@ -23,9 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     emailAddress: {
       type: DataTypes.STRING
     },
-    // dateOfBirth: {
-    //   type: DataTypes.STRING
-    // },
+    dateOfBirth: {
+      type: DataTypes.STRING
+    },
     password: {
       type: DataTypes.STRING
     },
@@ -42,6 +42,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     accountNumber: {
+      type: DataTypes.STRING
+    },
+    accountName: {
       type: DataTypes.STRING
     },
     nextOfKinName: {

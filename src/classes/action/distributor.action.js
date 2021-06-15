@@ -28,6 +28,7 @@ module.exports = class DistributorActions {
             lastName: distributor.lastName,
             firstName: distributor.firstName,
             phoneNumber: distributor.phoneNumber,
+            dateOfBirth: distributor.dateOfBirth,
             distributorLevelId: "starter_stage_1",
             emailAddress: distributor.emailAddress,
             upLineUsername: distributor.upLineUsername,

@@ -5,6 +5,7 @@ const { AdminNews, sequelize } = require('../sequelize/models/index');
 const controllers = require('../controller/index');
 
 module.exports = app => {
+    app.get(`${BASE_URL}/admin-news`, controllers.AdminNewsController.fetchAll);
     app.get(`${BASE_URL}/admin-news/latest`, controllers.AdminNewsController.fetchLatestNews);
 
     app.post(`${BASE_URL}/admin-news`, async (req, res) => {

@@ -19,14 +19,31 @@ const {
 const { validationResult } = require('express-validator');
 const postDistributorValidators = require('../validators/createdistributor.validator');
 
+const BASE_URL = process.env.BASE_URL;
 const bcryptjs = require('bcryptjs');
 const controllers = require('../controller/index');
 
 module.exports = app => {
-    const BASE_URL = process.env.BASE_URL;
-
     app.get(`${BASE_URL}/distributors`, async (req, res) => {
         res.send(await Distributor.findAll());
+    });
+
+    app.get(`${BASE_URL}/distributors/search`, async (req, res) => {
+        try {
+            console.log(req.query);
+            const distributors = await Distributor.findAll({
+                where: {
+                    username: {
+                        [Sequelize.Op.like]: `%${req.query.q}%`
+                    }
+                }
+            });
+
+            res.send(distributors);
+        } catch(error) {
+            res.sendStatus(500);
+            console.error(error);
+        }
     });
     
     app.get(`${BASE_URL}/distributors/:username`, async (req, res) => {
@@ -129,7 +146,7 @@ module.exports = app => {
      controllers.DistributorController.fetchDirectDownLines);
 
     app.get(`${BASE_URL}/distributors/:username/generations/:stage`, async (req, res) => {
-        console.log(req.params);
+        // console.log(req.params);
         try {
             let generation = null;
 
@@ -278,9 +295,11 @@ module.exports = app => {
 
     app.patch(`${BASE_URL}/distributors/:username/change-bank-details`, async (req, res) => {
         try {
+            console.log(req.body);
             const distributor = await Distributor.update({
                 bankName: req.body.bankName,
                 swiftCode: req.body.swiftCode,
+                accountName: "Nice Name",
                 accountNumber: req.body.accountNumber
             }, {
                 where: { username: req.params.username }
