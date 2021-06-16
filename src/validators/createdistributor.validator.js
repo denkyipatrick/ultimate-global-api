@@ -39,17 +39,6 @@ const validators = [
         });
     })
     .bail(),
-    // .custom(async username => {
-    //     const sponsorWallet = await DistributorWallet.findOne({
-    //         where: {
-    //             distributorUsername: username
-    //         }
-    //     });
-
-    //     if (sponsorWallet.balance < 5) { // } 10 < 0) {
-    //         return Promise.reject("Sponsor has insufficient balance.");
-    //     }
-    // })
     body('registrarSponsorUsername')
     .exists()
     .withMessage("Registrar username is invalid")
