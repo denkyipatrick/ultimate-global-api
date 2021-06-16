@@ -388,7 +388,17 @@ module.exports = class DistributorActions {
                                 as: 'downLines', 
                                 separate: true,
                                 order: [['createdAt', 'ASC']],
-                                include: [{ model: Distributor, as: 'distributor', include: ['stage'] },]
+                                include: [
+                                    { model: Distributor, as: 'distributor', include: ['stage'] },
+                                    { model: DistributorLevelGeneration,
+                                        as: 'downLines',
+                                        separate: true,
+                                        order: [['createdAt', 'ASC']],
+                                        include: [
+                                            { model: Distributor, as: 'distributor', include: ['stage'] },
+                                        ]
+                                    }
+                                ]                                
                             }
                         ]
                     }
@@ -426,6 +436,14 @@ module.exports = class DistributorActions {
                                     order: [['createdAt', 'ASC']],
                                     include: [
                                         { model: Distributor, as: 'distributor', include: ['stage'] },
+                                        { model: DistributorLevelGeneration,
+                                            as: 'downLines',
+                                            separate: true,
+                                            order: [['createdAt', 'ASC']],
+                                            include: [
+                                                { model: Distributor, as: 'distributor', include: ['stage'] },
+                                            ]
+                                        }
                                     ]
                                 }
                             ]
