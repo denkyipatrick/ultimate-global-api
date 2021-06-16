@@ -366,7 +366,7 @@ module.exports = class DistributorActions {
     }
 
     static findDistributorLevelGeneration(username, levelId, transaction = null) {
-        if (levelId === 'starter_level_1') {
+        if (levelId === 'starter_stage_1') {
             return DistributorLevelGeneration.findOne({
                 where: {
                     [Sequelize.Op.and]: [
@@ -379,13 +379,15 @@ module.exports = class DistributorActions {
                     { 
                         model: DistributorLevelGeneration, 
                         as: 'downLines',
-                        order: [['position', 'ASC']],
+                        separate: true,
+                        order: [['createdAt', 'ASC']],
                         include: [
                             { model: Distributor, as: 'distributor', include: ['stage'] },
-                            { 
+                            {
                                 model: DistributorLevelGeneration, 
                                 as: 'downLines', 
-                                order: [['position', 'ASC']], 
+                                separate: true,
+                                order: [['createdAt', 'ASC']],
                                 include: [{ model: Distributor, as: 'distributor', include: ['stage'] },]
                             }
                         ]
@@ -407,17 +409,20 @@ module.exports = class DistributorActions {
                 { 
                     model: DistributorLevelGeneration,
                     as: 'downLines',
+                    separate: true,
                     order: [['createdAt', 'ASC']],
                     include: [
                         { model: Distributor, as: 'distributor', include: ['stage'] },
                         { 
                             model: DistributorLevelGeneration,
                             as: 'downLines',
+                            separate: true,
                             order: [['createdAt', 'ASC']],
                             include: [
                                 { model: Distributor, as: 'distributor', include: ['stage'] },
                                 { model: DistributorLevelGeneration,
                                     as: 'downLines',
+                                    separate: true,
                                     order: [['createdAt', 'ASC']],
                                     include: [
                                         { model: Distributor, as: 'distributor', include: ['stage'] },

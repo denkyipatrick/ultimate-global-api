@@ -171,8 +171,6 @@ module.exports = app => {
                         await getTeamCount(distributor.downLines[1], stageId);
                     }
                 }
-
-                console.log(count);
             }
 
             switch(req.params.stage) {
@@ -189,24 +187,28 @@ module.exports = app => {
                     generation = await DistributorActions.findDistributorLevelGeneration(
                         req.params.username, 'leader_stage_2'
                     );
+                    await getTeamCount(generation, 'leader_stage_2');
                     break;
                 }
                 case 'ruby': {
                     generation = await DistributorActions.findDistributorLevelGeneration(
                         req.params.username, 'ruby_stage_3'
                     );
+                    await getTeamCount(generation, 'ruby_stage_3');
                     break;
                 }
                 case 'emerald': {
                     generation = await DistributorActions.findDistributorLevelGeneration(
                         req.params.username, 'emerald_stage_4'
                     );
+                    await getTeamCount(generation, 'emerald_stage_4');
                     break;
                 }
                 case 'diamond': {
                     generation = await DistributorActions.findDistributorLevelGeneration(
                         req.params.username, 'diamond_stage_5'
                     );
+                    await getTeamCount(generation, 'diamond_stage_5');
                     break;
                 }
                 default: {
